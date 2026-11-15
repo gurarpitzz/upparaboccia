@@ -72,7 +72,8 @@
         .a11y-toggle-btn {
             position: fixed !important;
             bottom: 25px !important;
-            left: 25px !important;
+            right: 25px !important;
+            left: auto !important;
             width: 56px !important;
             height: 56px !important;
             border-radius: 50% !important;
@@ -96,7 +97,8 @@
         .a11y-panel {
             position: fixed !important;
             bottom: 95px !important;
-            left: 25px !important;
+            right: 25px !important;
+            left: auto !important;
             background: rgba(8, 26, 43, 0.96) !important;
             backdrop-filter: blur(12px) !important;
             border: 2px solid rgba(16, 185, 129, 0.4) !important;
@@ -118,11 +120,13 @@
                 width: 44px !important;
                 height: 44px !important;
                 bottom: 12px !important;
-                left: 12px !important;
+                right: 12px !important;
+                left: auto !important;
             }
             .a11y-panel {
                 bottom: 66px !important;
-                left: 12px !important;
+                right: 12px !important;
+                left: auto !important;
                 max-width: calc(100vw - 24px) !important;
                 max-height: calc(100dvh - 82px) !important;
             }
