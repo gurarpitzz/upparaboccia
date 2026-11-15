@@ -6548,7 +6548,7 @@ body {
 }
 
 .up-leader-photo {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 5 / 6;
     overflow: hidden;
     background: #0e1f4b;
     position: relative;
@@ -6559,6 +6559,31 @@ body {
     height: 100%;
     object-fit: cover;
     object-position: center top;
+    transition: transform 0.35s ease;
+}
+
+.up-leader-card:hover .up-leader-photo img {
+    transform: scale(1.03);
+}
+
+.up-leader-photo.leader-photo-amit {
+    background: #000000;
+}
+
+.up-leader-photo.leader-photo-amit img {
+    object-fit: contain;
+    object-position: center bottom;
+    padding-top: 10px;
+}
+
+.up-leader-photo.leader-photo-priyanka img {
+    object-fit: cover;
+    object-position: center top;
+}
+
+.up-leader-photo.leader-photo-group img {
+    object-fit: cover;
+    object-position: 47.5% bottom;
 }
 
 .up-leader-role-pill {
@@ -6736,7 +6761,7 @@ body {
 
 .up-ach-img-wrap {
     position: relative;
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 4 / 3;
     overflow: hidden;
     background: #0e1f4b;
 }
