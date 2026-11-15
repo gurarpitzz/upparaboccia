@@ -6352,20 +6352,38 @@ body {
 }
 
 .bsfi-affiliated-badge-wrap {
-    display: flex;
+    display: inline-flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: 3px;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1.5px solid rgba(8, 27, 75, 0.18);
+    border-radius: 16px;
+    padding: 5px 12px 4px;
+    box-shadow: 0 6px 18px rgba(8, 27, 75, 0.16), 0 0 0 3px rgba(255, 255, 255, 0.55);
+    justify-self: end;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.bsfi-affiliated-badge-wrap:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(8, 27, 75, 0.22), 0 0 0 4px rgba(255, 255, 255, 0.72);
+}
+
+.bsfi-affiliated-badge-wrap .tl-bsfi {
+    filter: drop-shadow(0 0 1.5px #ffffff) drop-shadow(0 0 3px #ffffff) drop-shadow(0 2px 5px rgba(8, 27, 75, 0.18));
 }
 
 .bsfi-affiliated-tag {
-    font-size: 0.56rem;
+    font-size: 0.55rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.7px;
-    color: var(--navy-primary);
-    opacity: 0.75;
+    letter-spacing: 0.65px;
+    color: #081B4B;
+    opacity: 1;
     white-space: nowrap;
+    line-height: 1.1;
 }
 
 /* Preloader Skip Button (WCAG + UX) */
@@ -6939,10 +6957,12 @@ div[id="stats-bar"] {
     .bsfi-affiliated-badge-wrap {
         align-items: center !important;
         justify-content: center !important;
+        padding: 4px 8px;
+        border-radius: 12px;
     }
 
     .bsfi-affiliated-badge-wrap .tl-bsfi {
-        height: 54px !important;
+        height: 46px !important;
         width: auto;
     }
 
