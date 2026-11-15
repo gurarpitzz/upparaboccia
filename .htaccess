@@ -1,0 +1,151 @@
+# ==============================================================================
+# Uttar Pradesh Para Boccia Association (UPPBA) - Apache Security & Hardening
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Core Server & Directory Hardening
+# ------------------------------------------------------------------------------
+DirectoryIndex index.php index.html
+Options -Indexes -MultiViews
+ServerSignature Off
+AddDefaultCharset UTF-8
+
+# ------------------------------------------------------------------------------
+# 2. HTTPS Enforcement, Method Filtering & Request Firewall (mod_rewrite)
+# ------------------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block dangerous / unneeded HTTP methods
+    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|DELETE|CONNECT|PATCH) [NC]
+    RewriteRule .* - [R=405,L]
+
+    # Block direct access to hidden files and directories (except .well-known/)
+    RewriteCond %{REQUEST_URI} "!(^|/)\.well-known/([^./]+./?)+$" [NC]
+    RewriteCond %{SCRIPT_FILENAME} -d [OR]
+    RewriteCond %{SCRIPT_FILENAME} -f
+    RewriteRule "(^|/)\." - [F,L]
+
+    # Query string exploit protection (XSS, SQLi, PHP globals, traversal)
+    RewriteCond %{QUERY_STRING} (<script|%3Cscript|</script|%3C/script) [NC,OR]
+    RewriteCond %{QUERY_STRING} (GLOBALS(=|\[|%[0-9A-Z]{0,2})|_REQUEST(=|\[|%[0-9A-Z]{0,2})) [OR]
+    RewriteCond %{QUERY_STRING} (base64_encode|base64_decode|eval\(|gzinflate\() [NC,OR]
+    RewriteCond %{QUERY_STRING} (\.\.[\\/]|\.\.%2f|\.\.%5c|/etc/passwd|/proc/self) [NC,OR]
+    RewriteCond %{QUERY_STRING} (union(\s|%20|%2b|\+)+select|concat\(|benchmark\(|sleep\() [NC]
+    RewriteRule .* - [F,L]
+
+    # Force HTTPS redirect (301) for non-local hosts
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:[0-9]+)?$ [NC]
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# ------------------------------------------------------------------------------
+# 3. Sensitive File Access Protection
+# ------------------------------------------------------------------------------
+<FilesMatch "(^\.ht|\.(env|git|gitignore|gitattributes|ini|log|sh|sql|bak|backup|swp|dist|fla|inc|psd|py|pyc|md|lock|yml|yaml|toml)$|^(info\.txt|composer\.(json|lock)|package(-lock)?\.json)$)">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ------------------------------------------------------------------------------
+# 4. HTTP Security Headers (mod_headers)
+# ------------------------------------------------------------------------------
+<IfModule mod_headers.c>
+    # Enforce HSTS on HTTPS connections
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" env=HTTPS
+
+    # Prevent MIME-type sniffing & clickjacking
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+
+    # Referrer, cross-origin isolation & browser feature permissions
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()"
+    Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+    Header always set Cross-Origin-Resource-Policy "same-origin"
+    Header always set X-Permitted-Cross-Domain-Policies "none"
+
+    # Content Security Policy aligned with UPPBA assets (Google Fonts, Font Awesome, local vendor libs, SVG cursors)
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self'; media-src 'self'; object-src 'none'; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+
+    # Remove server & framework fingerprinting headers
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+    Header always unset X-AspNet-Version
+</IfModule>
+
+# ------------------------------------------------------------------------------
+# 5. PHP Runtime Hardening (mod_php / mod_php8)
+# ------------------------------------------------------------------------------
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_flag expose_php Off
+    php_flag allow_url_fopen Off
+    php_flag allow_url_include Off
+    php_flag session.cookie_httponly On
+    php_flag session.cookie_secure On
+    php_flag session.use_strict_mode On
+</IfModule>
+
+<IfModule mod_php8.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_flag expose_php Off
+    php_flag allow_url_fopen Off
+    php_flag allow_url_include Off
+    php_flag session.cookie_httponly On
+    php_flag session.cookie_secure On
+    php_flag session.use_strict_mode On
+</IfModule>
+
+# ------------------------------------------------------------------------------
+# 6. MIME Types, Compression & Cache-Control
+# ------------------------------------------------------------------------------
+<IfModule mod_mime.c>
+    AddType image/webp .webp
+    AddType image/svg+xml .svg .svgz
+    AddType application/json .json
+    AddType font/woff2 .woff2
+    AddType font/woff .woff
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json application/xml image/svg+xml font/woff2
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 week"
+
+    # HTML / PHP entry documents: always revalidate
+    ExpiresByType text/html "access plus 0 seconds"
+    ExpiresByType application/json "access plus 1 hour"
+
+    # Static CSS, JS, images & fonts
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 6 months"
+    ExpiresByType image/png "access plus 6 months"
+    ExpiresByType image/webp "access plus 6 months"
+    ExpiresByType image/svg+xml "access plus 6 months"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(html|htm|php)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule>
